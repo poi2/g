@@ -16,6 +16,13 @@ pub enum Commands {
         #[command(subcommand)]
         cmd: RepositoryCommands,
     },
+
+    #[command(alias = "wt")]
+    #[command(about = "Worktree management")]
+    Worktree {
+        #[command(subcommand)]
+        cmd: WorktreeCommands,
+    },
 }
 
 #[derive(Subcommand)]
@@ -24,5 +31,18 @@ pub enum RepositoryCommands {
     Clone {
         #[arg(help = "Git repository URL")]
         url: String,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum WorktreeCommands {
+    #[command(short_flag = 'c')]
+    #[command(about = "Create a new worktree")]
+    Create {
+        #[arg(help = "Branch name")]
+        branch: String,
+
+        #[arg(long, help = "Base branch for new branch")]
+        base: Option<String>,
     },
 }

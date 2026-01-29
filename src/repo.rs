@@ -5,16 +5,17 @@ use std::process::Command;
 
 use crate::path;
 
-#[allow(dead_code)]
 pub struct RepoInfo {
+    #[allow(dead_code)]
     pub repo_root: PathBuf,
+    #[allow(dead_code)]
     pub remote_url: String,
+    #[allow(dead_code)]
     pub repo_path: String,
     pub main_repo_dir: PathBuf,
     pub worktree_base: PathBuf,
 }
 
-#[allow(dead_code)]
 impl RepoInfo {
     pub fn detect() -> Result<Self> {
         let repo_root = Self::find_git_root()?;
