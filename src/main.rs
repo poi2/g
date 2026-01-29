@@ -1,3 +1,4 @@
+mod branch;
 mod cli;
 mod fzf;
 mod git;
@@ -53,6 +54,14 @@ fn main() -> Result<()> {
                     )?;
                 }
             }
+        }
+        Commands::Switch {
+            branch,
+            interactive,
+            args,
+        } => {
+            let repo_info = repo::RepoInfo::detect()?;
+            branch::switch_branch(&repo_info.repo_root, branch.as_deref(), interactive, &args)?;
         }
     }
 
