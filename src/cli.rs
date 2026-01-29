@@ -63,4 +63,19 @@ pub enum WorktreeCommands {
         #[arg(help = "Branch name")]
         branch: String,
     },
+
+    #[command(about = "Switch to a worktree")]
+    Switch {
+        #[arg(help = "Branch name")]
+        branch: Option<String>,
+
+        #[arg(short, long, help = "Interactive selection with fzf")]
+        interactive: bool,
+
+        #[arg(short, long, help = "Create new worktree and switch to it")]
+        create: bool,
+
+        #[arg(long, help = "Base branch for new branch (used with --create)")]
+        base: Option<String>,
+    },
 }
