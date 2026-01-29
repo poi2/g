@@ -6,15 +6,11 @@ use std::process::Command;
 use crate::path;
 
 pub fn clone_repository(url: &str) -> Result<()> {
-    let repo_path = path::parse_repo_path(url)
-        .context("Failed to parse repository URL")?;
+    let repo_path = path::parse_repo_path(url).context("Failed to parse repository URL")?;
 
-    let home = env::var("HOME")
-        .context("HOME environment variable not set")?;
+    let home = env::var("HOME").context("HOME environment variable not set")?;
 
-    let target_dir = PathBuf::from(&home)
-        .join("src")
-        .join(&repo_path);
+    let target_dir = PathBuf::from(&home).join("src").join(&repo_path);
 
     if target_dir.exists() {
         anyhow::bail!(
@@ -34,7 +30,7 @@ pub fn clone_repository(url: &str) -> Result<()> {
     println!("Cloning {} to {}...", url, target_dir.display());
 
     let status = Command::new("git")
-        .args(&["clone", url, target_dir.to_str().unwrap()])
+        .args(["clone", url, target_dir.to_str().unwrap()])
         .status()
         .context("Failed to execute git clone")?;
 
@@ -52,7 +48,7 @@ pub fn clone_repository(url: &str) -> Result<()> {
 
 fn get_default_branch(repo_path: &PathBuf) -> Result<String> {
     let output = Command::new("git")
-        .args(&["branch", "--show-current"])
+        .args(["branch", "--show-current"])
         .current_dir(repo_path)
         .output()
         .context("Failed to get default branch")?;

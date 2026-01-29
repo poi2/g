@@ -4,8 +4,8 @@ use regex::Regex;
 pub fn parse_repo_path(url: &str) -> Result<String> {
     let https_re = Regex::new(r"https?://([^/]+)/(.+?)(?:\.git)?$")
         .context("Failed to compile HTTPS regex")?;
-    let ssh_re = Regex::new(r"git@([^:]+):(.+?)(?:\.git)?$")
-        .context("Failed to compile SSH regex")?;
+    let ssh_re =
+        Regex::new(r"git@([^:]+):(.+?)(?:\.git)?$").context("Failed to compile SSH regex")?;
 
     if let Some(caps) = https_re.captures(url) {
         let host = &caps[1];
