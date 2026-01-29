@@ -23,6 +23,18 @@ pub enum Commands {
         #[command(subcommand)]
         cmd: WorktreeCommands,
     },
+
+    #[command(about = "Switch branches (git switch wrapper)")]
+    Switch {
+        #[arg(help = "Branch name")]
+        branch: Option<String>,
+
+        #[arg(short, long, help = "Interactive selection with fzf")]
+        interactive: bool,
+
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
 }
 
 #[derive(Subcommand)]
