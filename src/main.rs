@@ -1,4 +1,5 @@
 mod cli;
+mod fzf;
 mod git;
 mod path;
 mod repo;
