@@ -5,16 +5,17 @@ use std::process::Command;
 
 use crate::path;
 
-#[allow(dead_code)]
 pub struct RepoInfo {
+    #[allow(dead_code)]
     pub repo_root: PathBuf,
+    #[allow(dead_code)]
     pub remote_url: String,
+    #[allow(dead_code)]
     pub repo_path: String,
     pub main_repo_dir: PathBuf,
     pub worktree_base: PathBuf,
 }
 
-#[allow(dead_code)]
 impl RepoInfo {
     pub fn detect() -> Result<Self> {
         let repo_root = Self::find_git_root()?;
@@ -87,9 +88,13 @@ impl RepoInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    static TEST_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn test_get_worktree_base_default() {
+        let _lock = TEST_LOCK.lock().unwrap();
         env::remove_var("G_WORKTREE_BASE");
         let base = RepoInfo::get_worktree_base().unwrap();
         assert!(base.to_str().unwrap().ends_with("src/.worktrees"));
@@ -97,6 +102,7 @@ mod tests {
 
     #[test]
     fn test_get_worktree_base_custom() {
+        let _lock = TEST_LOCK.lock().unwrap();
         env::set_var("G_WORKTREE_BASE", "/custom/path");
         let base = RepoInfo::get_worktree_base().unwrap();
         assert_eq!(base, PathBuf::from("/custom/path"));
