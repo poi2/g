@@ -25,7 +25,8 @@ impl Worktree {
             .context("Failed to execute git worktree list")?;
 
         if !output.status.success() {
-            anyhow::bail!("git worktree list failed");
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            anyhow::bail!("git worktree list failed: {}", stderr);
         }
 
         let stdout = String::from_utf8(output.stdout)?;
@@ -45,11 +46,8 @@ impl Worktree {
             }
 
             let parts: Vec<&str> = line.splitn(2, ' ').collect();
-            if parts.len() != 2 {
-                continue;
-            }
-
-            let (key, value) = (parts[0], parts[1]);
+            let key = parts[0];
+            let value = if parts.len() > 1 { parts[1] } else { "" };
 
             match key {
                 "worktree" => {
@@ -229,10 +227,16 @@ branch refs/heads/feature-auth
 
         let worktrees = Worktree::parse_porcelain(input).unwrap();
         assert_eq!(worktrees.len(), 2);
+        assert_eq!(worktrees[0].path, PathBuf::from("/path/to/main"));
         assert_eq!(worktrees[0].branch, Some("main".to_string()));
         assert_eq!(worktrees[0].head_sha, "a1b2c3d4");
+        assert!(!worktrees[0].is_bare);
+        assert!(!worktrees[0].is_locked);
+        assert_eq!(worktrees[1].path, PathBuf::from("/path/to/feature-auth"));
         assert_eq!(worktrees[1].branch, Some("feature-auth".to_string()));
         assert_eq!(worktrees[1].head_sha, "f6e5d4c3");
+        assert!(!worktrees[1].is_bare);
+        assert!(!worktrees[1].is_locked);
     }
 
     #[test]
@@ -244,7 +248,40 @@ HEAD a1b2c3d4
 
         let worktrees = Worktree::parse_porcelain(input).unwrap();
         assert_eq!(worktrees.len(), 1);
+        assert_eq!(worktrees[0].path, PathBuf::from("/path/to/detached"));
         assert_eq!(worktrees[0].branch, None);
         assert_eq!(worktrees[0].head_sha, "a1b2c3d4");
+        assert!(!worktrees[0].is_bare);
+        assert!(!worktrees[0].is_locked);
+    }
+
+    #[test]
+    fn test_parse_porcelain_bare() {
+        let input = r#"worktree /path/to/bare
+HEAD a1b2c3d4
+branch refs/heads/main
+bare
+
+"#;
+
+        let worktrees = Worktree::parse_porcelain(input).unwrap();
+        assert_eq!(worktrees.len(), 1);
+        assert_eq!(worktrees[0].path, PathBuf::from("/path/to/bare"));
+        assert!(worktrees[0].is_bare);
+    }
+
+    #[test]
+    fn test_parse_porcelain_locked() {
+        let input = r#"worktree /path/to/locked
+HEAD a1b2c3d4
+branch refs/heads/main
+locked
+
+"#;
+
+        let worktrees = Worktree::parse_porcelain(input).unwrap();
+        assert_eq!(worktrees.len(), 1);
+        assert_eq!(worktrees[0].path, PathBuf::from("/path/to/locked"));
+        assert!(worktrees[0].is_locked);
     }
 }
