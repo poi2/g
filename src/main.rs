@@ -28,6 +28,9 @@ fn main() -> Result<()> {
                 WorktreeCommands::Create { branch, base } => {
                     worktree::create_worktree(&repo_info, &branch, base.as_deref())?;
                 }
+                WorktreeCommands::List => {
+                    worktree::list_worktrees(&repo_info)?;
+                }
             }
         }
     }
