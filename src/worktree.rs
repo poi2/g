@@ -128,7 +128,7 @@ pub fn list_worktrees(repo_info: &RepoInfo) -> Result<()> {
     Ok(())
 }
 
-pub fn create_worktree(repo_info: &RepoInfo, branch: &str, base: Option<&str>) -> Result<()> {
+pub fn create_worktree(repo_info: &RepoInfo, branch: &str, base: Option<&str>) -> Result<PathBuf> {
     let worktree_path = repo_info.worktree_base.join(branch);
 
     if worktree_path.exists() {
@@ -184,7 +184,68 @@ pub fn create_worktree(repo_info: &RepoInfo, branch: &str, base: Option<&str>) -
 
     println!("{}", worktree_path.display());
 
-    Ok(())
+    Ok(worktree_path)
+}
+
+pub fn switch_worktree(
+    repo_info: &RepoInfo,
+    branch: Option<&str>,
+    interactive: bool,
+    create: bool,
+    base: Option<&str>,
+) -> Result<()> {
+    if create {
+        if let Some(branch_name) = branch {
+            let path = create_worktree(repo_info, branch_name, base)?;
+            println!("{}", path.display());
+            return Ok(());
+        } else {
+            anyhow::bail!("Branch name required with --create");
+        }
+    }
+
+    if interactive {
+        let worktrees = Worktree::list(&repo_info.main_repo_dir)?;
+        let items: Vec<String> = worktrees
+            .iter()
+            .map(|wt| {
+                format!(
+                    "{:<20} {}",
+                    wt.branch.as_deref().unwrap_or("(detached)"),
+                    wt.path.display()
+                )
+            })
+            .collect();
+
+        let opts = crate::fzf::FzfOptions {
+            prompt: Some("Select worktree: ".to_string()),
+            preview: Some("git -C {2} log -n 10 --oneline --color=always".to_string()),
+            ..Default::default()
+        };
+
+        if let Some(selection) = crate::fzf::run_fzf(&items, Some(opts))? {
+            let path = selection
+                .split_whitespace()
+                .nth(1)
+                .ok_or_else(|| anyhow::anyhow!("Failed to parse selection"))?;
+            println!("{}", path);
+        }
+
+        return Ok(());
+    }
+
+    if let Some(branch_name) = branch {
+        let worktrees = Worktree::list(&repo_info.main_repo_dir)?;
+        let worktree = worktrees
+            .iter()
+            .find(|wt| wt.branch.as_deref() == Some(branch_name))
+            .ok_or_else(|| anyhow::anyhow!("Worktree not found: {}", branch_name))?;
+
+        println!("{}", worktree.path.display());
+        return Ok(());
+    }
+
+    anyhow::bail!("Specify branch name or use --interactive")
 }
 
 pub fn delete_worktree(repo_info: &RepoInfo, branch: &str, force: bool) -> Result<()> {

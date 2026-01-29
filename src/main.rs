@@ -27,7 +27,7 @@ fn main() -> Result<()> {
 
             match cmd {
                 WorktreeCommands::Create { branch, base } => {
-                    worktree::create_worktree(&repo_info, &branch, base.as_deref())?;
+                    let _ = worktree::create_worktree(&repo_info, &branch, base.as_deref())?;
                 }
                 WorktreeCommands::List => {
                     worktree::list_worktrees(&repo_info)?;
@@ -37,6 +37,20 @@ fn main() -> Result<()> {
                 }
                 WorktreeCommands::ForceDelete { branch } => {
                     worktree::delete_worktree(&repo_info, &branch, true)?;
+                }
+                WorktreeCommands::Switch {
+                    branch,
+                    interactive,
+                    create,
+                    base,
+                } => {
+                    worktree::switch_worktree(
+                        &repo_info,
+                        branch.as_deref(),
+                        interactive,
+                        create,
+                        base.as_deref(),
+                    )?;
                 }
             }
         }
