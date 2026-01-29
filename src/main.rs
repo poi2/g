@@ -31,6 +31,12 @@ fn main() -> Result<()> {
                 WorktreeCommands::List => {
                     worktree::list_worktrees(&repo_info)?;
                 }
+                WorktreeCommands::Delete { branch } => {
+                    worktree::delete_worktree(&repo_info, &branch, false)?;
+                }
+                WorktreeCommands::ForceDelete { branch } => {
+                    worktree::delete_worktree(&repo_info, &branch, true)?;
+                }
             }
         }
     }

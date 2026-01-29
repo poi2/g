@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use std::fs;
+use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -184,6 +185,71 @@ pub fn create_worktree(repo_info: &RepoInfo, branch: &str, base: Option<&str>) -
     println!("{}", worktree_path.display());
 
     Ok(())
+}
+
+pub fn delete_worktree(repo_info: &RepoInfo, branch: &str, force: bool) -> Result<()> {
+    let worktrees = Worktree::list(&repo_info.main_repo_dir)?;
+
+    let target = worktrees
+        .iter()
+        .find(|wt| wt.branch.as_deref() == Some(branch))
+        .ok_or_else(|| anyhow::anyhow!("Worktree not found for branch: {}", branch))?;
+
+    if target.is_bare {
+        anyhow::bail!("Cannot delete bare repository");
+    }
+
+    if !confirm_delete(target)? {
+        println!("Cancelled");
+        return Ok(());
+    }
+
+    let mut cmd = Command::new("git");
+    cmd.args(["worktree", "remove"]);
+
+    if force {
+        cmd.arg("--force");
+    }
+
+    cmd.arg(&target.path);
+
+    let status = cmd
+        .current_dir(&repo_info.main_repo_dir)
+        .status()
+        .context("Failed to execute git worktree remove")?;
+
+    if !status.success() {
+        anyhow::bail!("git worktree remove failed");
+    }
+
+    let prune_output = Command::new("git")
+        .args(["worktree", "prune"])
+        .current_dir(&repo_info.main_repo_dir)
+        .output()
+        .context("Failed to execute git worktree prune")?;
+
+    if !prune_output.status.success() {
+        let stderr = String::from_utf8_lossy(&prune_output.stderr);
+        anyhow::bail!("git worktree prune failed: {}", stderr);
+    }
+
+    println!("Removed worktree: {}", branch);
+    println!("  Path: {}", target.path.display());
+
+    Ok(())
+}
+
+fn confirm_delete(worktree: &Worktree) -> Result<bool> {
+    print!(
+        "Delete worktree '{}'? [y/N]: ",
+        worktree.branch.as_deref().unwrap_or("unknown")
+    );
+    io::stdout().flush()?;
+
+    let mut input = String::new();
+    io::stdin().read_line(&mut input)?;
+
+    Ok(input.trim().eq_ignore_ascii_case("y"))
 }
 
 fn check_branch_exists(repo_root: &std::path::PathBuf, branch: &str) -> Result<bool> {

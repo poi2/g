@@ -49,4 +49,18 @@ pub enum WorktreeCommands {
     #[command(short_flag = 'l')]
     #[command(about = "List worktrees")]
     List,
+
+    #[command(short_flag = 'd')]
+    #[command(about = "Delete a worktree")]
+    Delete {
+        #[arg(help = "Branch name")]
+        branch: String,
+    },
+
+    #[command(short_flag = 'D')]
+    #[command(about = "Force delete a worktree")]
+    ForceDelete {
+        #[arg(help = "Branch name")]
+        branch: String,
+    },
 }
