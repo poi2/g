@@ -71,9 +71,7 @@ impl RepoInfo {
             );
         }
 
-        Ok(String::from_utf8(output.stdout)?
-            .trim()
-            .to_string())
+        Ok(String::from_utf8(output.stdout)?.trim().to_string())
     }
 
     pub fn get_worktree_base() -> Result<PathBuf> {
