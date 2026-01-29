@@ -1,6 +1,7 @@
 mod cli;
 mod git;
 mod path;
+mod repo;
 
 use anyhow::Result;
 use clap::Parser;
