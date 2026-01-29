@@ -222,11 +222,16 @@ pub fn delete_worktree(repo_info: &RepoInfo, branch: &str, force: bool) -> Resul
         anyhow::bail!("git worktree remove failed");
     }
 
-    Command::new("git")
+    let prune_output = Command::new("git")
         .args(["worktree", "prune"])
         .current_dir(&repo_info.main_repo_dir)
-        .status()
+        .output()
         .context("Failed to execute git worktree prune")?;
+
+    if !prune_output.status.success() {
+        let stderr = String::from_utf8_lossy(&prune_output.stderr);
+        anyhow::bail!("git worktree prune failed: {}", stderr);
+    }
 
     println!("Removed worktree: {}", branch);
     println!("  Path: {}", target.path.display());
