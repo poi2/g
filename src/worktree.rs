@@ -1,8 +1,133 @@
 use anyhow::{Context, Result};
 use std::fs;
+use std::path::PathBuf;
 use std::process::Command;
 
 use crate::repo::RepoInfo;
+
+pub struct Worktree {
+    pub path: PathBuf,
+    #[allow(dead_code)]
+    pub head_sha: String,
+    pub branch: Option<String>,
+    #[allow(dead_code)]
+    pub is_bare: bool,
+    #[allow(dead_code)]
+    pub is_locked: bool,
+}
+
+impl Worktree {
+    pub fn list(repo_root: &PathBuf) -> Result<Vec<Worktree>> {
+        let output = Command::new("git")
+            .args(["worktree", "list", "--porcelain"])
+            .current_dir(repo_root)
+            .output()
+            .context("Failed to execute git worktree list")?;
+
+        if !output.status.success() {
+            anyhow::bail!("git worktree list failed");
+        }
+
+        let stdout = String::from_utf8(output.stdout)?;
+        Self::parse_porcelain(&stdout)
+    }
+
+    fn parse_porcelain(output: &str) -> Result<Vec<Worktree>> {
+        let mut worktrees = Vec::new();
+        let mut current: Option<WorktreeBuilder> = None;
+
+        for line in output.lines() {
+            if line.is_empty() {
+                if let Some(builder) = current.take() {
+                    worktrees.push(builder.build()?);
+                }
+                continue;
+            }
+
+            let parts: Vec<&str> = line.splitn(2, ' ').collect();
+            if parts.len() != 2 {
+                continue;
+            }
+
+            let (key, value) = (parts[0], parts[1]);
+
+            match key {
+                "worktree" => {
+                    current = Some(WorktreeBuilder::new(PathBuf::from(value)));
+                }
+                "HEAD" => {
+                    if let Some(ref mut builder) = current {
+                        builder.head_sha = value.to_string();
+                    }
+                }
+                "branch" => {
+                    if let Some(ref mut builder) = current {
+                        let branch_name = value.strip_prefix("refs/heads/").unwrap_or(value);
+                        builder.branch = Some(branch_name.to_string());
+                    }
+                }
+                "bare" => {
+                    if let Some(ref mut builder) = current {
+                        builder.is_bare = true;
+                    }
+                }
+                "locked" => {
+                    if let Some(ref mut builder) = current {
+                        builder.is_locked = true;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        if let Some(builder) = current {
+            worktrees.push(builder.build()?);
+        }
+
+        Ok(worktrees)
+    }
+}
+
+struct WorktreeBuilder {
+    path: PathBuf,
+    head_sha: String,
+    branch: Option<String>,
+    is_bare: bool,
+    is_locked: bool,
+}
+
+impl WorktreeBuilder {
+    fn new(path: PathBuf) -> Self {
+        Self {
+            path,
+            head_sha: String::new(),
+            branch: None,
+            is_bare: false,
+            is_locked: false,
+        }
+    }
+
+    fn build(self) -> Result<Worktree> {
+        Ok(Worktree {
+            path: self.path,
+            head_sha: self.head_sha,
+            branch: self.branch,
+            is_bare: self.is_bare,
+            is_locked: self.is_locked,
+        })
+    }
+}
+
+pub fn list_worktrees(repo_info: &RepoInfo) -> Result<()> {
+    let worktrees = Worktree::list(&repo_info.main_repo_dir)?;
+
+    for wt in worktrees {
+        let branch_name = wt.branch.unwrap_or_else(|| "(detached)".to_string());
+        println!("{:<20} {}", branch_name, wt.path.display());
+    }
+
+    Ok(())
+}
 
 pub fn create_worktree(repo_info: &RepoInfo, branch: &str, base: Option<&str>) -> Result<()> {
     let worktree_path = repo_info.worktree_base.join(branch);
@@ -85,4 +210,41 @@ fn check_branch_exists(repo_root: &std::path::PathBuf, branch: &str) -> Result<b
         .success();
 
     Ok(remote)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_porcelain() {
+        let input = r#"worktree /path/to/main
+HEAD a1b2c3d4
+branch refs/heads/main
+
+worktree /path/to/feature-auth
+HEAD f6e5d4c3
+branch refs/heads/feature-auth
+"#;
+
+        let worktrees = Worktree::parse_porcelain(input).unwrap();
+        assert_eq!(worktrees.len(), 2);
+        assert_eq!(worktrees[0].branch, Some("main".to_string()));
+        assert_eq!(worktrees[0].head_sha, "a1b2c3d4");
+        assert_eq!(worktrees[1].branch, Some("feature-auth".to_string()));
+        assert_eq!(worktrees[1].head_sha, "f6e5d4c3");
+    }
+
+    #[test]
+    fn test_parse_porcelain_detached_head() {
+        let input = r#"worktree /path/to/detached
+HEAD a1b2c3d4
+
+"#;
+
+        let worktrees = Worktree::parse_porcelain(input).unwrap();
+        assert_eq!(worktrees.len(), 1);
+        assert_eq!(worktrees[0].branch, None);
+        assert_eq!(worktrees[0].head_sha, "a1b2c3d4");
+    }
 }

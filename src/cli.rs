@@ -45,4 +45,8 @@ pub enum WorktreeCommands {
         #[arg(long, help = "Base branch for new branch")]
         base: Option<String>,
     },
+
+    #[command(short_flag = 'l')]
+    #[command(about = "List worktrees")]
+    List,
 }
