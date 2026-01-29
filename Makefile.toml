@@ -23,6 +23,10 @@ description = "Run tests"
 command = "cargo"
 args = ["test", "--verbose"]
 
+[tasks.test-all]
+description = "Run all tests"
+dependencies = ["test"]
+
 [tasks.build-release]
 description = "Build release binary"
 command = "cargo"
@@ -31,10 +35,6 @@ args = ["build", "--release", "--verbose"]
 [tasks.check-all]
 description = "Run all checks (format, clippy, build, test)"
 dependencies = ["format", "clippy", "build", "test"]
-
-[tasks.test-all]
-description = "Run all tests and checks"
-dependencies = ["check-all"]
 
 [tasks.ci]
 description = "Run full CI pipeline locally"
