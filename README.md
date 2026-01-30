@@ -1,13 +1,16 @@
-# g - Git Worktree Manager
+# Sonic Git (`g`) - The Fastest Git Worktree Manager
 
-Rust-based CLI tool for managing Git worktrees. Provides efficient workflows for working with multiple branches in parallel.
+⚡ **Sonic-speed Git worktree management at your fingertips.**
+
+Rust-based CLI tool for managing Git worktrees with blazing-fast performance. Switch between branches, create worktrees, and manage parallel workflows at sonic speed.
 
 ## Features
 
-- 🚀 Repository management with `$HOME/src/github.com/org/repo` structure
-- 🌳 Parallel work on multiple branches using Git Worktree
-- 🔍 Fast branch/worktree switching with fzf integration
-- 📁 Hierarchical worktree management preserving branch structure
+- ⚡ **Sonic Speed**: Lightning-fast operations with minimal overhead
+- 🚀 **Smart Structure**: Repository management with `$HOME/src/github.com/org/repo` structure
+- 🌳 **Parallel Workflows**: Work on multiple branches simultaneously using Git Worktree
+- 🔍 **Interactive Selection**: Fast branch/worktree switching with fzf integration
+- 📁 **Hierarchical Organization**: Worktree management preserving branch structure
 
 ## Installation
 
