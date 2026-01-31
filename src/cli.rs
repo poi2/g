@@ -10,22 +10,20 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    #[command(alias = "repo")]
     #[command(about = "Repository management")]
-    Repository {
+    SonicRepository {
         #[command(subcommand)]
         cmd: RepositoryCommands,
     },
 
-    #[command(alias = "wt")]
     #[command(about = "Worktree management")]
-    Worktree {
+    SonicWorktree {
         #[command(subcommand)]
         cmd: WorktreeCommands,
     },
 
-    #[command(about = "Switch branches (git switch wrapper)")]
-    Switch {
+    #[command(about = "Switch branches with fzf")]
+    SonicSwitch {
         #[arg(help = "Branch name")]
         branch: Option<String>,
 
@@ -35,6 +33,9 @@ pub enum Commands {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
     },
+
+    #[command(external_subcommand)]
+    External(Vec<String>),
 }
 
 #[derive(Subcommand)]

@@ -2,14 +2,13 @@ use anyhow::{Context, Result};
 use git2::Config as GitConfig;
 use std::collections::HashMap;
 
-#[allow(dead_code)]
 pub struct Config {
+    #[allow(dead_code)]
     pub root: Option<String>,
     pub aliases: HashMap<String, String>,
 }
 
 impl Config {
-    #[allow(dead_code)]
     pub fn load() -> Result<Self> {
         let git_config = GitConfig::open_default().context("Failed to open git config")?;
 
@@ -35,7 +34,6 @@ impl Config {
         Ok(Config { root, aliases })
     }
 
-    #[allow(dead_code)]
     pub fn resolve_alias(&self, cmd: &str) -> Option<Vec<String>> {
         self.aliases.get(cmd).map(|alias_value| {
             alias_value
