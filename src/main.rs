@@ -5,6 +5,7 @@ mod fzf;
 mod git;
 mod path;
 mod repo;
+mod repository;
 mod worktree;
 
 use anyhow::Result;
@@ -34,6 +35,24 @@ fn main() -> Result<()> {
                 RepositoryCommands::Clone { url } => {
                     git::clone_repository(&url)?;
                 }
+                RepositoryCommands::Ls => {
+                    repository::list_repositories(&config)?;
+                }
+                RepositoryCommands::Switch {
+                    repository: repo,
+                    interactive,
+                } => {
+                    repository::switch_repository(&config, repo.as_deref(), interactive)?;
+                }
+                RepositoryCommands::Delete {
+                    repository: repo,
+                    interactive,
+                } => {
+                    repository::delete_repository(&config, repo.as_deref(), interactive)?;
+                }
+                RepositoryCommands::New { repository: repo } => {
+                    repository::new_repository(&config, &repo)?;
+                }
             }
         }
         Commands::SonicWorktree { cmd } => {
@@ -41,30 +60,33 @@ fn main() -> Result<()> {
             let repo_info = repo::RepoInfo::detect()?;
 
             match cmd {
-                WorktreeCommands::Create { branch, base } => {
+                WorktreeCommands::New { branch, base } => {
                     let _ = worktree::create_worktree(&repo_info, &branch, base.as_deref())?;
                 }
-                WorktreeCommands::List => {
+                WorktreeCommands::Ls => {
                     worktree::list_worktrees(&repo_info)?;
                 }
-                WorktreeCommands::Delete { branch } => {
-                    worktree::delete_worktree(&repo_info, &branch, false)?;
-                }
-                WorktreeCommands::ForceDelete { branch } => {
-                    worktree::delete_worktree(&repo_info, &branch, true)?;
+                WorktreeCommands::Mv { old, new } => {
+                    worktree::move_worktree(&repo_info, old.as_deref(), &new)?;
                 }
                 WorktreeCommands::Switch {
                     branch,
                     interactive,
-                    create,
-                    base,
                 } => {
-                    worktree::switch_worktree(
+                    worktree::switch_worktree(&repo_info, branch.as_deref(), interactive)?;
+                }
+                WorktreeCommands::Delete {
+                    branch,
+                    force,
+                    all,
+                    interactive,
+                } => {
+                    worktree::delete_worktrees(
                         &repo_info,
                         branch.as_deref(),
+                        force,
+                        all,
                         interactive,
-                        create,
-                        base.as_deref(),
                     )?;
                 }
             }
@@ -76,6 +98,38 @@ fn main() -> Result<()> {
         } => {
             let repo_info = repo::RepoInfo::detect()?;
             branch::switch_branch(&repo_info.repo_root, branch.as_deref(), interactive, &args)?;
+        }
+        Commands::SonicBranch { cmd } => {
+            use cli::BranchCommands;
+            let repo_info = repo::RepoInfo::detect()?;
+
+            match cmd {
+                BranchCommands::Ls { options } => {
+                    branch::list_branches(&repo_info.repo_root, &options)?;
+                }
+                BranchCommands::New {
+                    branch: branch_name,
+                } => {
+                    branch::new_branch(&repo_info.repo_root, &branch_name)?;
+                }
+                BranchCommands::Mv { old, new } => {
+                    branch::move_branch(&repo_info.repo_root, old.as_deref(), &new)?;
+                }
+                BranchCommands::Delete {
+                    branch: branch_name,
+                    force,
+                    all,
+                    interactive,
+                } => {
+                    branch::delete_branches(
+                        &repo_info.repo_root,
+                        branch_name.as_deref(),
+                        force,
+                        all,
+                        interactive,
+                    )?;
+                }
+            }
         }
         Commands::External(args) => {
             use std::process::Command;

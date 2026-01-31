@@ -51,7 +51,6 @@ impl FzfOptions {
     }
 }
 
-#[allow(dead_code)]
 pub fn run_fzf(items: &[String], options: Option<FzfOptions>) -> Result<Option<String>> {
     if !is_fzf_available() {
         anyhow::bail!(
@@ -95,6 +94,18 @@ pub fn run_fzf(items: &[String], options: Option<FzfOptions>) -> Result<Option<S
     }
 
     Ok(Some(trimmed.to_string()))
+}
+
+pub fn select(items: &[String], prompt: &str) -> Result<String> {
+    let options = FzfOptions {
+        prompt: Some(format!("{}: ", prompt)),
+        ..Default::default()
+    };
+
+    match run_fzf(items, Some(options))? {
+        Some(selection) => Ok(selection),
+        None => anyhow::bail!("No selection made"),
+    }
 }
 
 fn is_fzf_available() -> bool {

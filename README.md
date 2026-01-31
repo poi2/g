@@ -136,26 +136,48 @@ All custom commands use the `sonic-` prefix:
 #### Repository Management
 
 ```bash
-g sonic-repository clone <url>  # Clone a repository
+g sonic-repository clone <url>              # Clone a repository
+g sonic-repository ls                       # List all repositories
+g sonic-repository switch -i                # Switch to repository (interactive)
+g sonic-repository switch <repo>           # Switch to repository
+g sonic-repository delete -i                # Delete repository (interactive)
+g sonic-repository delete <repo>           # Delete repository
+g sonic-repository new <repo>              # Create new repository
 ```
 
 #### Worktree Operations
 
 ```bash
-g sonic-worktree -c <branch>          # Create worktree + switch
-g sonic-worktree -l                   # List worktrees
-g sonic-worktree switch -i            # Select worktree with fzf + switch
-g sonic-worktree switch <branch>      # Switch to worktree by branch name
-g sonic-worktree switch -c <branch>   # Create worktree + switch
-g sonic-worktree -d <branch>          # Delete worktree
-g sonic-worktree -D <branch>          # Force delete worktree
+g sonic-worktree new <branch>             # Create worktree
+g sonic-worktree ls                       # List worktrees
+g sonic-worktree mv <old> <new>           # Rename worktree (branch + directory)
+g sonic-worktree mv <new>                 # Rename current worktree
+g sonic-worktree switch -i                # Switch to worktree (interactive)
+g sonic-worktree switch <branch>          # Switch to worktree
+g sonic-worktree delete <branch>          # Delete worktree
+g sonic-worktree delete -f <branch>       # Force delete worktree
+g sonic-worktree delete -a                # Delete all except current
+g sonic-worktree delete -a -f             # Force delete all except current
+g sonic-worktree delete -i                # Delete worktree (interactive)
+g sonic-worktree delete -i -f             # Force delete worktree (interactive)
 ```
 
 #### Branch Operations
 
 ```bash
-g sonic-switch <branch>         # Switch branch with fzf
-g sonic-switch -i               # Select branch with fzf + switch
+g sonic-switch <branch>                   # Switch branch
+g sonic-switch -i                         # Switch branch (interactive)
+
+g sonic-branch ls [options]               # List branches (git branch)
+g sonic-branch new <branch>               # Create branch (git switch -c)
+g sonic-branch mv <old> <new>             # Rename branch
+g sonic-branch mv <new>                   # Rename current branch
+g sonic-branch delete <branch>            # Delete branch
+g sonic-branch delete -f <branch>         # Force delete branch
+g sonic-branch delete -a                  # Delete all except base/current
+g sonic-branch delete -a -f               # Force delete all except base/current
+g sonic-branch delete -i                  # Delete merged branches (interactive)
+g sonic-branch delete -i -f               # Delete branches (interactive)
 ```
 
 ### Git Passthrough
@@ -176,11 +198,33 @@ Configure custom aliases in `.gitconfig`:
 # Example alias configuration
 git config --global sonic-git.alias.s "sonic-switch"
 git config --global sonic-git.alias.si "sonic-switch -i"
+
+# Repository aliases
 git config --global sonic-git.alias.rc "sonic-repository clone"
+git config --global sonic-git.alias.rs "sonic-repository switch -i"
+git config --global sonic-git.alias.rd "sonic-repository delete -i"
+git config --global sonic-git.alias.rn "sonic-repository new"
+
+# Branch aliases
+git config --global sonic-git.alias.bl "sonic-branch ls"
+git config --global sonic-git.alias.bn "sonic-branch new"
+git config --global sonic-git.alias.bm "sonic-branch mv"
+git config --global sonic-git.alias.bd "sonic-branch delete"
+
+# Worktree aliases
+git config --global sonic-git.alias.wtn "sonic-worktree new"
+git config --global sonic-git.alias.wtl "sonic-worktree ls"
+git config --global sonic-git.alias.wtm "sonic-worktree mv"
+git config --global sonic-git.alias.wts "sonic-worktree switch"
+git config --global sonic-git.alias.wtsi "sonic-worktree switch -i"
+git config --global sonic-git.alias.wtd "sonic-worktree delete"
 
 # Usage
-g si              # Same as: g sonic-switch -i
-g rc <url>        # Same as: g sonic-repository clone <url>
+g si              # sonic-switch -i
+g rc <url>        # sonic-repository clone <url>
+g rs              # sonic-repository switch -i
+g bn feat         # sonic-branch new feat
+g wtsi            # sonic-worktree switch -i
 ```
 
 ## Architecture

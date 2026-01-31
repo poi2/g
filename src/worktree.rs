@@ -191,19 +191,7 @@ pub fn switch_worktree(
     repo_info: &RepoInfo,
     branch: Option<&str>,
     interactive: bool,
-    create: bool,
-    base: Option<&str>,
 ) -> Result<()> {
-    if create {
-        if let Some(branch_name) = branch {
-            let path = create_worktree(repo_info, branch_name, base)?;
-            println!("{}", path.display());
-            return Ok(());
-        } else {
-            anyhow::bail!("Branch name required with --create");
-        }
-    }
-
     if interactive {
         let worktrees = Worktree::list(&repo_info.main_repo_dir)?;
         let items: Vec<String> = worktrees
@@ -246,6 +234,172 @@ pub fn switch_worktree(
     }
 
     anyhow::bail!("Specify branch name or use --interactive")
+}
+
+pub fn move_worktree(repo_info: &RepoInfo, old: Option<&str>, new: &str) -> Result<()> {
+    let old_branch = if let Some(branch) = old {
+        branch.to_string()
+    } else {
+        get_current_branch(&repo_info.repo_root)?
+    };
+
+    let worktrees = Worktree::list(&repo_info.main_repo_dir)?;
+    let target = worktrees
+        .iter()
+        .find(|wt| wt.branch.as_deref() == Some(&old_branch))
+        .ok_or_else(|| anyhow::anyhow!("Worktree not found for branch: {}", old_branch))?;
+
+    let old_path = &target.path;
+    let new_path = old_path
+        .parent()
+        .unwrap_or(&repo_info.worktree_base)
+        .join(new);
+
+    let status = Command::new("git")
+        .args(["branch", "-m", &old_branch, new])
+        .current_dir(&repo_info.main_repo_dir)
+        .status()
+        .context("Failed to rename branch")?;
+
+    if !status.success() {
+        anyhow::bail!("Failed to rename branch: {} -> {}", old_branch, new);
+    }
+
+    let status = Command::new("git")
+        .args([
+            "worktree",
+            "move",
+            old_path.to_str().unwrap(),
+            new_path.to_str().unwrap(),
+        ])
+        .current_dir(&repo_info.main_repo_dir)
+        .status()
+        .context("Failed to move worktree")?;
+
+    if !status.success() {
+        Command::new("git")
+            .args(["branch", "-m", new, &old_branch])
+            .current_dir(&repo_info.main_repo_dir)
+            .status()
+            .ok();
+        anyhow::bail!("Failed to move worktree directory");
+    }
+
+    println!("Renamed worktree: {} -> {}", old_branch, new);
+    println!("  {} -> {}", old_path.display(), new_path.display());
+    Ok(())
+}
+
+pub fn delete_worktrees(
+    repo_info: &RepoInfo,
+    branch: Option<&str>,
+    force: bool,
+    all: bool,
+    interactive: bool,
+) -> Result<()> {
+    if all {
+        let current = get_current_branch(&repo_info.repo_root)?;
+        let worktrees = Worktree::list(&repo_info.main_repo_dir)?;
+
+        let to_delete: Vec<&Worktree> = worktrees
+            .iter()
+            .filter(|wt| {
+                !wt.is_bare
+                    && wt.branch.as_deref() != Some(&current)
+                    && wt.path != repo_info.repo_root
+            })
+            .collect();
+
+        if to_delete.is_empty() {
+            println!("No worktrees to delete");
+            return Ok(());
+        }
+
+        for wt in to_delete {
+            let branch_name = wt.branch.as_deref().unwrap_or("unknown");
+            let status = Command::new("git")
+                .args([
+                    "worktree",
+                    "remove",
+                    if force { "--force" } else { "" },
+                    wt.path.to_str().unwrap(),
+                ])
+                .args(vec![wt.path.to_str().unwrap()])
+                .current_dir(&repo_info.main_repo_dir)
+                .status()
+                .context("Failed to remove worktree")?;
+
+            if status.success() {
+                println!("Deleted worktree: {}", branch_name);
+            }
+        }
+
+        return Ok(());
+    }
+
+    if interactive {
+        let current = get_current_branch(&repo_info.repo_root)?;
+        let worktrees = Worktree::list(&repo_info.main_repo_dir)?;
+
+        let candidates: Vec<&Worktree> = worktrees
+            .iter()
+            .filter(|wt| {
+                !wt.is_bare
+                    && wt.branch.as_deref() != Some(&current)
+                    && wt.path != repo_info.repo_root
+            })
+            .collect();
+
+        if candidates.is_empty() {
+            println!("No worktrees to delete");
+            return Ok(());
+        }
+
+        let items: Vec<String> = candidates
+            .iter()
+            .map(|wt| {
+                format!(
+                    "{:<20} {}",
+                    wt.branch.as_deref().unwrap_or("(detached)"),
+                    wt.path.display()
+                )
+            })
+            .collect();
+
+        let selection = crate::fzf::select(&items, "Select worktree to delete")?;
+        let branch_name = selection.split_whitespace().next().unwrap();
+
+        let target = candidates
+            .iter()
+            .find(|wt| wt.branch.as_deref() == Some(branch_name))
+            .ok_or_else(|| anyhow::anyhow!("Worktree not found"))?;
+
+        let mut cmd = Command::new("git");
+        cmd.args(["worktree", "remove"]);
+        if force {
+            cmd.arg("--force");
+        }
+        cmd.arg(&target.path);
+
+        let status = cmd
+            .current_dir(&repo_info.main_repo_dir)
+            .status()
+            .context("Failed to remove worktree")?;
+
+        if !status.success() {
+            anyhow::bail!("Failed to delete worktree");
+        }
+
+        println!("Deleted worktree: {}", branch_name);
+        return Ok(());
+    }
+
+    if let Some(branch_name) = branch {
+        delete_worktree(repo_info, branch_name, force)?;
+        return Ok(());
+    }
+
+    anyhow::bail!("Branch name, --all, or --interactive flag required");
 }
 
 pub fn delete_worktree(repo_info: &RepoInfo, branch: &str, force: bool) -> Result<()> {
@@ -311,6 +465,20 @@ fn confirm_delete(worktree: &Worktree) -> Result<bool> {
     io::stdin().read_line(&mut input)?;
 
     Ok(input.trim().eq_ignore_ascii_case("y"))
+}
+
+fn get_current_branch(repo_root: &PathBuf) -> Result<String> {
+    let output = Command::new("git")
+        .args(["rev-parse", "--abbrev-ref", "HEAD"])
+        .current_dir(repo_root)
+        .output()
+        .context("Failed to get current branch")?;
+
+    if !output.status.success() {
+        anyhow::bail!("Failed to get current branch");
+    }
+
+    Ok(String::from_utf8(output.stdout)?.trim().to_string())
 }
 
 fn check_branch_exists(repo_root: &std::path::PathBuf, branch: &str) -> Result<bool> {
