@@ -1,5 +1,6 @@
 mod branch;
 mod cli;
+mod config;
 mod fzf;
 mod git;
 mod path;
