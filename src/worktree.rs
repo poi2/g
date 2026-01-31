@@ -160,7 +160,7 @@ pub fn create_worktree(repo_info: &RepoInfo, branch: &str, base: Option<&str>) -
     }
 
     cmd.arg(&worktree_path);
-    
+
     if branch_exists {
         cmd.arg(branch);
     } else if let Some(base_branch) = base {
@@ -483,7 +483,7 @@ fn get_current_branch(repo_root: &PathBuf) -> Result<String> {
 
 fn check_branch_exists(repo_root: &std::path::PathBuf, branch: &str) -> Result<bool> {
     use std::process::Stdio;
-    
+
     let local = Command::new("git")
         .args(["show-ref", "--verify", &format!("refs/heads/{}", branch)])
         .current_dir(repo_root)
