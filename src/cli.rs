@@ -34,6 +34,12 @@ pub enum Commands {
         args: Vec<String>,
     },
 
+    #[command(about = "Branch management")]
+    SonicBranch {
+        #[command(subcommand)]
+        cmd: BranchCommands,
+    },
+
     #[command(external_subcommand)]
     External(Vec<String>),
 }
@@ -45,13 +51,39 @@ pub enum RepositoryCommands {
         #[arg(help = "Git repository URL")]
         url: String,
     },
+
+    #[command(about = "List all repositories")]
+    Ls,
+
+    #[command(about = "Switch to a repository")]
+    Switch {
+        #[arg(help = "Repository name (e.g., github.com/user/repo)")]
+        repository: Option<String>,
+
+        #[arg(short, long, help = "Interactive selection with fzf")]
+        interactive: bool,
+    },
+
+    #[command(about = "Delete a repository")]
+    Delete {
+        #[arg(help = "Repository name (e.g., github.com/user/repo)")]
+        repository: Option<String>,
+
+        #[arg(short, long, help = "Interactive selection with fzf")]
+        interactive: bool,
+    },
+
+    #[command(about = "Create a new repository")]
+    New {
+        #[arg(help = "Repository path (e.g., github.com/user/repo)")]
+        repository: String,
+    },
 }
 
 #[derive(Subcommand)]
 pub enum WorktreeCommands {
-    #[command(short_flag = 'c')]
     #[command(about = "Create a new worktree")]
-    Create {
+    New {
         #[arg(help = "Branch name")]
         branch: String,
 
@@ -59,22 +91,16 @@ pub enum WorktreeCommands {
         base: Option<String>,
     },
 
-    #[command(short_flag = 'l')]
     #[command(about = "List worktrees")]
-    List,
+    Ls,
 
-    #[command(short_flag = 'd')]
-    #[command(about = "Delete a worktree")]
-    Delete {
-        #[arg(help = "Branch name")]
-        branch: String,
-    },
+    #[command(about = "Rename a worktree")]
+    Mv {
+        #[arg(help = "Old branch name (omit to rename current)")]
+        old: Option<String>,
 
-    #[command(short_flag = 'D')]
-    #[command(about = "Force delete a worktree")]
-    ForceDelete {
-        #[arg(help = "Branch name")]
-        branch: String,
+        #[arg(help = "New branch name")]
+        new: String,
     },
 
     #[command(about = "Switch to a worktree")]
@@ -84,11 +110,59 @@ pub enum WorktreeCommands {
 
         #[arg(short, long, help = "Interactive selection with fzf")]
         interactive: bool,
+    },
 
-        #[arg(short, long, help = "Create new worktree and switch to it")]
-        create: bool,
+    #[command(about = "Delete worktrees")]
+    Delete {
+        #[arg(help = "Branch name")]
+        branch: Option<String>,
 
-        #[arg(long, help = "Base branch for new branch (used with --create)")]
-        base: Option<String>,
+        #[arg(short, long, help = "Force delete")]
+        force: bool,
+
+        #[arg(short, long, help = "Delete all except current")]
+        all: bool,
+
+        #[arg(short, long, help = "Interactive selection with fzf")]
+        interactive: bool,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum BranchCommands {
+    #[command(about = "List branches")]
+    Ls {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        options: Vec<String>,
+    },
+
+    #[command(about = "Create a new branch")]
+    New {
+        #[arg(help = "Branch name")]
+        branch: String,
+    },
+
+    #[command(about = "Rename a branch")]
+    Mv {
+        #[arg(help = "Old branch name (omit to rename current branch)")]
+        old: Option<String>,
+
+        #[arg(help = "New branch name")]
+        new: String,
+    },
+
+    #[command(about = "Delete branches")]
+    Delete {
+        #[arg(help = "Branch name")]
+        branch: Option<String>,
+
+        #[arg(short, long, help = "Force delete")]
+        force: bool,
+
+        #[arg(short, long, help = "Delete all branches except base/current")]
+        all: bool,
+
+        #[arg(short, long, help = "Interactive selection with fzf")]
+        interactive: bool,
     },
 }
