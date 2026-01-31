@@ -107,7 +107,9 @@ fn main() -> Result<()> {
                 BranchCommands::Ls { options } => {
                     branch::list_branches(&repo_info.repo_root, &options)?;
                 }
-                BranchCommands::New { branch: branch_name } => {
+                BranchCommands::New {
+                    branch: branch_name,
+                } => {
                     branch::new_branch(&repo_info.repo_root, &branch_name)?;
                 }
                 BranchCommands::Mv { old, new } => {

@@ -192,7 +192,6 @@ pub fn switch_worktree(
     branch: Option<&str>,
     interactive: bool,
 ) -> Result<()> {
-
     if interactive {
         let worktrees = Worktree::list(&repo_info.main_repo_dir)?;
         let items: Vec<String> = worktrees
@@ -267,7 +266,12 @@ pub fn move_worktree(repo_info: &RepoInfo, old: Option<&str>, new: &str) -> Resu
     }
 
     let status = Command::new("git")
-        .args(["worktree", "move", old_path.to_str().unwrap(), new_path.to_str().unwrap()])
+        .args([
+            "worktree",
+            "move",
+            old_path.to_str().unwrap(),
+            new_path.to_str().unwrap(),
+        ])
         .current_dir(&repo_info.main_repo_dir)
         .status()
         .context("Failed to move worktree")?;
@@ -314,7 +318,12 @@ pub fn delete_worktrees(
         for wt in to_delete {
             let branch_name = wt.branch.as_deref().unwrap_or("unknown");
             let status = Command::new("git")
-                .args(["worktree", "remove", if force { "--force" } else { "" }, wt.path.to_str().unwrap()])
+                .args([
+                    "worktree",
+                    "remove",
+                    if force { "--force" } else { "" },
+                    wt.path.to_str().unwrap(),
+                ])
                 .args(vec![wt.path.to_str().unwrap()])
                 .current_dir(&repo_info.main_repo_dir)
                 .status()

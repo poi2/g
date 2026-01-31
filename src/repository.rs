@@ -9,21 +9,22 @@ use crate::fzf;
 
 pub fn list_repositories(config: &Config) -> Result<()> {
     let src_root = get_src_root(config)?;
-    
+
     if !src_root.exists() {
         println!("No repositories found in {}", src_root.display());
         return Ok(());
     }
 
     let repos = find_repositories(&src_root)?;
-    
+
     if repos.is_empty() {
         println!("No repositories found in {}", src_root.display());
         return Ok(());
     }
 
     for repo in repos {
-        let relative = repo.strip_prefix(&src_root)
+        let relative = repo
+            .strip_prefix(&src_root)
             .unwrap_or(&repo)
             .display()
             .to_string();
@@ -33,17 +34,22 @@ pub fn list_repositories(config: &Config) -> Result<()> {
     Ok(())
 }
 
-pub fn switch_repository(config: &Config, repository: Option<&str>, interactive: bool) -> Result<()> {
+pub fn switch_repository(
+    config: &Config,
+    repository: Option<&str>,
+    interactive: bool,
+) -> Result<()> {
     let src_root = get_src_root(config)?;
-    
+
     let target = if interactive {
         let repos = find_repositories(&src_root)?;
-        
+
         if repos.is_empty() {
             anyhow::bail!("No repositories found in {}", src_root.display());
         }
 
-        let items: Vec<String> = repos.iter()
+        let items: Vec<String> = repos
+            .iter()
             .map(|p| p.strip_prefix(&src_root).unwrap_or(p).display().to_string())
             .collect();
 
@@ -55,7 +61,7 @@ pub fn switch_repository(config: &Config, repository: Option<&str>, interactive:
     };
 
     let target_path = src_root.join(&target);
-    
+
     if !target_path.exists() {
         anyhow::bail!("Repository not found: {}", target_path.display());
     }
@@ -64,17 +70,22 @@ pub fn switch_repository(config: &Config, repository: Option<&str>, interactive:
     Ok(())
 }
 
-pub fn delete_repository(config: &Config, repository: Option<&str>, interactive: bool) -> Result<()> {
+pub fn delete_repository(
+    config: &Config,
+    repository: Option<&str>,
+    interactive: bool,
+) -> Result<()> {
     let src_root = get_src_root(config)?;
-    
+
     let target = if interactive {
         let repos = find_repositories(&src_root)?;
-        
+
         if repos.is_empty() {
             anyhow::bail!("No repositories found in {}", src_root.display());
         }
 
-        let items: Vec<String> = repos.iter()
+        let items: Vec<String> = repos
+            .iter()
             .map(|p| p.strip_prefix(&src_root).unwrap_or(p).display().to_string())
             .collect();
 
@@ -86,7 +97,7 @@ pub fn delete_repository(config: &Config, repository: Option<&str>, interactive:
     };
 
     let target_path = src_root.join(&target);
-    
+
     if !target_path.exists() {
         anyhow::bail!("Repository not found: {}", target_path.display());
     }
@@ -140,7 +151,7 @@ fn get_src_root(config: &Config) -> Result<std::path::PathBuf> {
 
 fn find_repositories(root: &std::path::Path) -> Result<Vec<PathBuf>> {
     let mut repos = Vec::new();
-    
+
     if let Ok(entries) = fs::read_dir(root) {
         for entry in entries.flatten() {
             let path = entry.path();
