@@ -14,7 +14,7 @@ pub struct FzfOptions {
 impl Default for FzfOptions {
     fn default() -> Self {
         Self {
-            height: Some("40%".to_string()),
+            height: Some("100%".to_string()),
             reverse: true,
             border: true,
             prompt: None,
