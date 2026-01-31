@@ -57,7 +57,7 @@ g() {
         if [ -n "$result" ] && [ -d "$result" ]; then
             cd "$result"
         else
-            echo "$result"
+            printf '%s\n' "$result"
         fi
     else
         command g "$@"
@@ -74,7 +74,7 @@ g() {
         if [ -n "$result" ] && [ -d "$result" ]; then
             cd "$result"
         else
-            echo "$result"
+            printf '%s\n' "$result"
         fi
     else
         command g "$@"
@@ -94,7 +94,7 @@ function g
     if test -n "$result" -a -d "$result"
         cd $result
     else
-        echo $result
+        printf '%s\n' $result
     end
 end
 ```
