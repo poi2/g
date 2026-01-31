@@ -12,10 +12,23 @@ use clap::Parser;
 use cli::{Cli, Commands};
 
 fn main() -> Result<()> {
-    let cli = Cli::parse();
+    let config = config::Config::load().unwrap_or_else(|_| config::Config {
+        root: None,
+        aliases: std::collections::HashMap::new(),
+    });
+
+    let mut args: Vec<String> = std::env::args().collect();
+
+    if args.len() > 1 {
+        if let Some(resolved) = config.resolve_alias(&args[1]) {
+            args.splice(1..2, resolved);
+        }
+    }
+
+    let cli = Cli::parse_from(args);
 
     match cli.command {
-        Commands::Repository { cmd } => {
+        Commands::SonicRepository { cmd } => {
             use cli::RepositoryCommands;
             match cmd {
                 RepositoryCommands::Clone { url } => {
@@ -23,7 +36,7 @@ fn main() -> Result<()> {
                 }
             }
         }
-        Commands::Worktree { cmd } => {
+        Commands::SonicWorktree { cmd } => {
             use cli::WorktreeCommands;
             let repo_info = repo::RepoInfo::detect()?;
 
@@ -56,13 +69,24 @@ fn main() -> Result<()> {
                 }
             }
         }
-        Commands::Switch {
+        Commands::SonicSwitch {
             branch,
             interactive,
             args,
         } => {
             let repo_info = repo::RepoInfo::detect()?;
             branch::switch_branch(&repo_info.repo_root, branch.as_deref(), interactive, &args)?;
+        }
+        Commands::External(args) => {
+            use std::process::Command;
+            let status = Command::new("git")
+                .args(&args)
+                .status()
+                .map_err(|e| anyhow::anyhow!("Failed to execute git: {}", e))?;
+
+            if !status.success() {
+                std::process::exit(status.code().unwrap_or(1));
+            }
         }
     }
 
