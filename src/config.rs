@@ -3,6 +3,7 @@ use git2::Config as GitConfig;
 use std::collections::HashMap;
 
 pub struct Config {
+    #[allow(dead_code)]
     pub root: Option<String>,
     pub aliases: HashMap<String, String>,
 }
