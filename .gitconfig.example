@@ -1,0 +1,52 @@
+# Sonic Git Configuration Example
+#
+# Copy these settings to your ~/.gitconfig or run the commands below:
+
+[sonic-git]
+	# Repository root directory (default: $HOME/src)
+	# NOTE: Use full path, not ~
+	root = /Users/yourusername/src
+
+[sonic-git "alias"]
+	# Repository management
+	rc = sonic-repository clone
+	rs = sonic-repository switch -i
+	rd = sonic-repository delete -i
+	rn = sonic-repository new
+
+	# Switch (branch switching with fzf)
+	s = sonic-switch
+	si = sonic-switch -i
+
+	# Branch management
+	bl = sonic-branch ls
+	bn = sonic-branch new
+	bm = sonic-branch mv
+	bd = sonic-branch delete
+
+	# Worktree management
+	wtn = sonic-worktree new
+	wtl = sonic-worktree ls
+	wtm = sonic-worktree mv
+	wts = sonic-worktree switch
+	wtsi = sonic-worktree switch -i
+	wtd = sonic-worktree delete
+
+# To apply these settings, run:
+#   git config --global sonic-git.root "$HOME/src"
+#   git config --global sonic-git.alias.rc "sonic-repository clone"
+#   git config --global sonic-git.alias.rs "sonic-repository switch -i"
+#   git config --global sonic-git.alias.rd "sonic-repository delete -i"
+#   git config --global sonic-git.alias.rn "sonic-repository new"
+#   git config --global sonic-git.alias.s "sonic-switch"
+#   git config --global sonic-git.alias.si "sonic-switch -i"
+#   git config --global sonic-git.alias.bl "sonic-branch ls"
+#   git config --global sonic-git.alias.bn "sonic-branch new"
+#   git config --global sonic-git.alias.bm "sonic-branch mv"
+#   git config --global sonic-git.alias.bd "sonic-branch delete"
+#   git config --global sonic-git.alias.wtn "sonic-worktree new"
+#   git config --global sonic-git.alias.wtl "sonic-worktree ls"
+#   git config --global sonic-git.alias.wtm "sonic-worktree mv"
+#   git config --global sonic-git.alias.wts "sonic-worktree switch"
+#   git config --global sonic-git.alias.wtsi "sonic-worktree switch -i"
+#   git config --global sonic-git.alias.wtd "sonic-worktree delete"
