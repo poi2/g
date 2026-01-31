@@ -157,14 +157,14 @@ pub fn create_worktree(repo_info: &RepoInfo, branch: &str, base: Option<&str>) -
 
     if !branch_exists {
         cmd.arg("-b").arg(branch);
-        if let Some(base_branch) = base {
-            cmd.arg(base_branch);
-        }
     }
 
     cmd.arg(&worktree_path);
+
     if branch_exists {
         cmd.arg(branch);
+    } else if let Some(base_branch) = base {
+        cmd.arg(base_branch);
     }
 
     println!(
@@ -482,9 +482,13 @@ fn get_current_branch(repo_root: &PathBuf) -> Result<String> {
 }
 
 fn check_branch_exists(repo_root: &std::path::PathBuf, branch: &str) -> Result<bool> {
+    use std::process::Stdio;
+
     let local = Command::new("git")
         .args(["show-ref", "--verify", &format!("refs/heads/{}", branch)])
         .current_dir(repo_root)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .status()?
         .success();
 
@@ -499,6 +503,8 @@ fn check_branch_exists(repo_root: &std::path::PathBuf, branch: &str) -> Result<b
             &format!("refs/remotes/origin/{}", branch),
         ])
         .current_dir(repo_root)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .status()?
         .success();
 

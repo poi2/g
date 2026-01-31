@@ -57,7 +57,7 @@ g() {
         if [ -n "$result" ] && [ -d "$result" ]; then
             cd "$result"
         else
-            echo "$result"
+            printf '%s\n' "$result"
         fi
     else
         command g "$@"
@@ -74,7 +74,7 @@ g() {
         if [ -n "$result" ] && [ -d "$result" ]; then
             cd "$result"
         else
-            echo "$result"
+            printf '%s\n' "$result"
         fi
     else
         command g "$@"
@@ -86,18 +86,16 @@ g() {
 
 ```fish
 function g
-    if test "$argv[1]" = "sonic-worktree"
-        if test "$argv[2]" = "switch"
-            set result (command g $argv)
-            if test -n "$result" -a -d "$result"
-                cd $result
-            else
-                echo $result
-            end
-            return
-        end
+    # Check if this might be a worktree/repository switch command
+    # Handles both full commands and aliases
+    set result (command g $argv)
+    
+    # If result is a directory path, cd to it
+    if test -n "$result" -a -d "$result"
+        cd $result
+    else
+        printf '%s\n' $result
     end
-    command g $argv
 end
 ```
 
