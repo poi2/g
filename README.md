@@ -28,15 +28,31 @@ cd g
 cargo install --path .
 ```
 
-### Shell function setup
+### Configuration
 
-Add shell functions to enable directory switching with `g wt switch` commands.
+#### Git Config
+
+Configure `g` command using `.gitconfig`:
+
+```bash
+# Set worktree base directory (default: $HOME/src/.worktrees)
+git config --global sonic-git.root "$HOME/src"
+
+# Add command aliases
+git config --global sonic-git.alias.s "sonic-switch"
+git config --global sonic-git.alias.si "sonic-switch -i"
+git config --global sonic-git.alias.rc "sonic-repository clone"
+```
+
+#### Shell Function Setup
+
+Add shell functions to enable directory switching with `g sonic-worktree switch` commands.
 
 **zsh (.zshrc):**
 
 ```zsh
 g() {
-    if [[ "$1" == "wt" || "$1" == "worktree" ]] && [[ "$2" == "switch" ]]; then
+    if [[ "$1" == "sonic-worktree" ]] && [[ "$2" == "switch" ]]; then
         local result=$(command g "$@")
         if [ -n "$result" ] && [ -d "$result" ]; then
             cd "$result"
@@ -53,7 +69,7 @@ g() {
 
 ```bash
 g() {
-    if [[ "$1" == "wt" || "$1" == "worktree" ]] && [[ "$2" == "switch" ]]; then
+    if [[ "$1" == "sonic-worktree" ]] && [[ "$2" == "switch" ]]; then
         local result=$(command g "$@")
         if [ -n "$result" ] && [ -d "$result" ]; then
             cd "$result"
@@ -70,7 +86,7 @@ g() {
 
 ```fish
 function g
-    if test "$argv[1]" = "wt" -o "$argv[1]" = "worktree"
+    if test "$argv[1]" = "sonic-worktree"
         if test "$argv[2]" = "switch"
             set result (command g $argv)
             if test -n "$result" -a -d "$result"
@@ -89,47 +105,82 @@ end
 
 ```bash
 # 1. Clone a repository
-g repo clone https://github.com/poi2/my-project.git
+g sonic-repository clone https://github.com/poi2/my-project.git
 
 # 2. Create a worktree
 cd ~/src/github.com/poi2/my-project
-g wt -c feature/auth
+g sonic-worktree -c feature/auth
 
 # 3. Interactive switching (with fzf)
-g wt switch -i  # Select from worktree list
-g switch -i     # Select from branch list
+g sonic-worktree switch -i  # Select from worktree list
+g sonic-switch -i           # Select from branch list
 
 # 4. Delete a worktree
-g wt -d feature-auth
+g sonic-worktree -d feature-auth
+
+# 5. Use aliases (configured in .gitconfig)
+git config --global sonic-git.alias.si "sonic-switch -i"
+g si  # Alias to sonic-switch -i
+
+# 6. Git passthrough - all non-sonic commands go to git
+g status        # Same as: git status
+g commit -m "foo"  # Same as: git commit -m "foo"
 ```
 
 ## Commands
 
-### Repository Management
+### Sonic Commands
+
+All custom commands use the `sonic-` prefix:
+
+#### Repository Management
 
 ```bash
-g repository clone <url>  # Clone a repository
-g repo clone <url>        # alias
+g sonic-repository clone <url>  # Clone a repository
 ```
 
-### Worktree Operations
+#### Worktree Operations
 
 ```bash
-g wt -c <branch>          # Create worktree + switch
-g wt -l                   # List worktrees
-g wt switch -i            # Select worktree with fzf + switch
-g wt switch <branch>      # Switch to worktree by branch name
-g wt switch -c <branch>   # Create worktree + switch
-g wt -d <branch>          # Delete worktree
-g wt -D <branch>          # Force delete worktree
+g sonic-worktree -c <branch>          # Create worktree + switch
+g sonic-worktree -l                   # List worktrees
+g sonic-worktree switch -i            # Select worktree with fzf + switch
+g sonic-worktree switch <branch>      # Switch to worktree by branch name
+g sonic-worktree switch -c <branch>   # Create worktree + switch
+g sonic-worktree -d <branch>          # Delete worktree
+g sonic-worktree -D <branch>          # Force delete worktree
 ```
 
-### Branch Operations
+#### Branch Operations
 
 ```bash
-g switch <branch>         # Switch branch (git switch wrapper)
-g switch -i               # Select branch with fzf + switch
-g switch -c <branch>      # Create and switch to new branch
+g sonic-switch <branch>         # Switch branch with fzf
+g sonic-switch -i               # Select branch with fzf + switch
+```
+
+### Git Passthrough
+
+All non-sonic commands are passed through to git:
+
+```bash
+g status                 # git status
+g commit -m "message"    # git commit -m "message"
+g push origin main       # git push origin main
+```
+
+### Aliases
+
+Configure custom aliases in `.gitconfig`:
+
+```bash
+# Example alias configuration
+git config --global sonic-git.alias.s "sonic-switch"
+git config --global sonic-git.alias.si "sonic-switch -i"
+git config --global sonic-git.alias.rc "sonic-repository clone"
+
+# Usage
+g si              # Same as: g sonic-switch -i
+g rc <url>        # Same as: g sonic-repository clone <url>
 ```
 
 ## Architecture
@@ -158,10 +209,23 @@ $HOME/src/
 - **Worktrees are separated**: Placed in `.worktrees/` to avoid build artifact conflicts
 - **Hierarchical structure preserved**: Branch names like `feature/auth` maintain directory hierarchy
 
-## Environment Variables
+## Configuration
+
+### Git Config
 
 ```bash
 # Worktree base directory (default: $HOME/src/.worktrees)
+git config --global sonic-git.root "$HOME/src"
+
+# Command aliases
+git config --global sonic-git.alias.s "sonic-switch"
+git config --global sonic-git.alias.si "sonic-switch -i"
+```
+
+### Environment Variables (Legacy)
+
+```bash
+# Still supported for backward compatibility
 export G_WORKTREE_BASE="/custom/path/.worktrees"
 ```
 
