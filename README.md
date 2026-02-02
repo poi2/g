@@ -87,15 +87,18 @@ g() {
 ```fish
 function g
     # Check if this might be a worktree/repository switch command
-    # Handles both full commands and aliases
-    set result (command g $argv)
-    
-    # If result is a directory path, cd to it
-    if test -n "$result" -a -d "$result"
-        cd $result
-    else
-        printf '%s\n' $result
+    if test "$argv[1]" = "sonic-worktree" -o "$argv[1]" = "sonic-repository"
+        if contains -- switch $argv; or contains -- clone $argv
+            set result (command g $argv)
+            if test -n "$result" -a -d "$result"
+                cd $result
+                return
+            end
+        end
     end
+    
+    # For all other commands, pass through directly to preserve color output
+    command g $argv
 end
 ```
 
